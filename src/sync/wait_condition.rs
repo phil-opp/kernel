@@ -2,11 +2,11 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use spin::{Mutex, RwLock};
 
-use context::{self, Context};
+use context::{self, Context, ContextRwLock};
 
 #[derive(Debug)]
 pub struct WaitCondition {
-    contexts: Mutex<Vec<Arc<RwLock<Context>>>>
+    contexts: Mutex<Vec<Arc<ContextRwLock>>>
 }
 
 impl WaitCondition {

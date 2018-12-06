@@ -5,6 +5,7 @@ use alloc::boxed::Box;
 use core::alloc::{GlobalAlloc, Layout};
 use core::sync::atomic::Ordering;
 use spin::{Once, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use ecc::EccContextRwLock;
 
 pub use self::context::{Context, ContextId, Status, WaitpidKey};
 pub use self::list::ContextList;
@@ -45,6 +46,8 @@ static CONTEXTS: Once<RwLock<ContextList>> = Once::new();
 
 #[thread_local]
 static CONTEXT_ID: context::AtomicContextId = context::AtomicContextId::default();
+
+pub type ContextRwLock = EccContextRwLock;
 
 pub fn init() {
     let mut contexts = contexts_mut();

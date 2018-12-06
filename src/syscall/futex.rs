@@ -7,14 +7,14 @@ use alloc::collections::VecDeque;
 use core::intrinsics;
 use spin::{Once, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use context::{self, Context};
+use context::{self, Context, ContextRwLock};
 use time;
 use syscall::data::TimeSpec;
 use syscall::error::{Error, Result, ESRCH, EAGAIN, EINVAL};
 use syscall::flag::{FUTEX_WAIT, FUTEX_WAKE, FUTEX_REQUEUE};
 use syscall::validate::{validate_slice, validate_slice_mut};
 
-type FutexList = VecDeque<(usize, Arc<RwLock<Context>>)>;
+type FutexList = VecDeque<(usize, Arc<ContextRwLock>)>;
 
 /// Fast userspace mutex list
 static FUTEXES: Once<RwLock<FutexList>> = Once::new();

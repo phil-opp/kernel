@@ -5,7 +5,7 @@ use core::sync::atomic::{AtomicU64, Ordering};
 use core::{mem, slice, usize};
 use spin::{Mutex, RwLock};
 
-use context::{self, Context};
+use context::{self, Context, ContextRwLock};
 use context::file::FileDescriptor;
 use context::memory::Grant;
 use event;
@@ -27,14 +27,14 @@ pub struct UserInner {
     pub flags: usize,
     pub scheme_id: AtomicSchemeId,
     next_id: AtomicU64,
-    context: Weak<RwLock<Context>>,
+    context: Weak<ContextRwLock>,
     todo: WaitQueue<Packet>,
-    fmap: Mutex<BTreeMap<u64, (Weak<RwLock<Context>>, FileDescriptor, Map)>>,
+    fmap: Mutex<BTreeMap<u64, (Weak<ContextRwLock>, FileDescriptor, Map)>>,
     done: WaitMap<u64, usize>
 }
 
 impl UserInner {
-    pub fn new(root_id: SchemeId, handle_id: usize, name: Box<[u8]>, flags: usize, context: Weak<RwLock<Context>>) -> UserInner {
+    pub fn new(root_id: SchemeId, handle_id: usize, name: Box<[u8]>, flags: usize, context: Weak<ContextRwLock>) -> UserInner {
         UserInner {
             root_id: root_id,
             handle_id: handle_id,
@@ -86,7 +86,7 @@ impl UserInner {
         UserInner::capture_inner(&self.context, buf.as_mut_ptr() as usize, buf.len(), PROT_WRITE, None)
     }
 
-    fn capture_inner(context_weak: &Weak<RwLock<Context>>, address: usize, size: usize, flags: usize, desc_opt: Option<FileDescriptor>) -> Result<usize> {
+    fn capture_inner(context_weak: &Weak<ContextRwLock>, address: usize, size: usize, flags: usize, desc_opt: Option<FileDescriptor>) -> Result<usize> {
         //TODO: Abstract with other grant creation
         if size == 0 {
             Ok(0)

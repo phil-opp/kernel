@@ -39,6 +39,7 @@ extern crate rustc_demangle;
 extern crate spin;
 #[cfg(feature = "slab")]
 extern crate slab_allocator;
+extern crate reed_solomon;
 
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
@@ -103,6 +104,8 @@ pub mod syscall;
 
 /// Time
 pub mod time;
+
+mod ecc;
 
 /// Tests
 #[cfg(test)]

@@ -9,10 +9,12 @@ use spin::RwLock;
 
 use syscall::error::{Result, Error, EAGAIN};
 use super::context::{Context, ContextId};
+use context::ContextRwLock;
+use ecc::EccContextRwLock;
 
 /// Context list type
 pub struct ContextList {
-    map: BTreeMap<ContextId, Arc<RwLock<Context>>>,
+    map: BTreeMap<ContextId, Arc<ContextRwLock>>,
     next_id: usize
 }
 
@@ -26,21 +28,21 @@ impl ContextList {
     }
 
     /// Get the nth context.
-    pub fn get(&self, id: ContextId) -> Option<&Arc<RwLock<Context>>> {
+    pub fn get(&self, id: ContextId) -> Option<&Arc<ContextRwLock>> {
         self.map.get(&id)
     }
 
     /// Get the current context.
-    pub fn current(&self) -> Option<&Arc<RwLock<Context>>> {
+    pub fn current(&self) -> Option<&Arc<ContextRwLock>> {
         self.map.get(&super::CONTEXT_ID.load(Ordering::SeqCst))
     }
 
-    pub fn iter(&self) -> ::alloc::collections::btree_map::Iter<ContextId, Arc<RwLock<Context>>> {
+    pub fn iter(&self) -> ::alloc::collections::btree_map::Iter<ContextId, Arc<ContextRwLock>> {
         self.map.iter()
     }
 
     /// Create a new context.
-    pub fn new_context(&mut self) -> Result<&Arc<RwLock<Context>>> {
+    pub fn new_context(&mut self) -> Result<&Arc<ContextRwLock>> {
         if self.next_id >= super::CONTEXT_MAX_CONTEXTS {
             self.next_id = 1;
         }
@@ -56,13 +58,13 @@ impl ContextList {
         let id = ContextId::from(self.next_id);
         self.next_id += 1;
 
-        assert!(self.map.insert(id, Arc::new(RwLock::new(Context::new(id)))).is_none());
+        assert!(self.map.insert(id, Arc::new(ContextRwLock::new(Context::new(id)))).is_none());
 
         Ok(self.map.get(&id).expect("Failed to insert new context. ID is out of bounds."))
     }
 
     /// Spawn a context from a function.
-    pub fn spawn(&mut self, func: extern fn()) -> Result<&Arc<RwLock<Context>>> {
+    pub fn spawn(&mut self, func: extern fn()) -> Result<&Arc<ContextRwLock>> {
         let context_lock = self.new_context()?;
         {
             let mut context = context_lock.write();
@@ -86,7 +88,7 @@ impl ContextList {
         Ok(context_lock)
     }
 
-    pub fn remove(&mut self, id: ContextId) -> Option<Arc<RwLock<Context>>> {
+    pub fn remove(&mut self, id: ContextId) -> Option<Arc<ContextRwLock>> {
         self.map.remove(&id)
     }
 }
