@@ -61,7 +61,7 @@ pub fn init() {
     context.arch.set_fx(fx.as_ptr() as usize);
     context.kfx = Some(fx);
     context.status = Status::Runnable;
-    context.running = true;
+    *context.running = true;
     context.cpu_id = Some(::cpu_id());
     CONTEXT_ID.store(context.id, Ordering::SeqCst);
 }

@@ -1263,7 +1263,7 @@ fn reap(pid: ContextId) -> Result<ContextId> {
             let contexts = context::contexts();
             let context_lock = contexts.get(pid).ok_or(Error::new(ESRCH))?;
             let context = context_lock.read();
-            running = context.running;
+            running = *context.running;
         }
 
         interrupt::pause();

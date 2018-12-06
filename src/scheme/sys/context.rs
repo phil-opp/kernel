@@ -47,7 +47,7 @@ pub fn resource() -> Result<Vec<u8>> {
                     stat_string.push('Z');
                 }
             }
-            if context.running {
+            if *context.running {
                 stat_string.push('+');
             }
 

@@ -15,9 +15,9 @@ unsafe fn update(context: &mut Context, cpu_id: usize) {
     }
 
     // Restore from signal, must only be done from another context to avoid overwriting the stack!
-    if context.ksig_restore && ! context.running {
+    if context.ksig_restore && ! *context.running {
         let ksig = context.ksig.take().expect("context::switch: ksig not set with ksig_restore");
-        context.arch = ksig.0;
+        *context.arch = ksig.0;
 
         if let Some(ref mut kfx) = context.kfx {
             kfx.clone_from_slice(&ksig.1.expect("context::switch: ksig kfx not set with ksig_restore"));
@@ -55,7 +55,7 @@ unsafe fn update(context: &mut Context, cpu_id: usize) {
 
 unsafe fn runnable(context: &Context, cpu_id: usize) -> bool {
     // Switch to context if it needs to run, is not currently running, and is owned by the current CPU
-    !context.running && context.status == Status::Runnable && context.cpu_id == Some(cpu_id)
+    !*context.running && context.status == Status::Runnable && context.cpu_id == Some(cpu_id)
 }
 
 /// Switch to the next context
@@ -125,8 +125,8 @@ pub unsafe fn switch() -> bool {
 
     // Switch process states, TSS stack pointer, and store new context ID
     if to_ptr as usize != 0 {
-        (&mut *from_ptr).running = false;
-        (&mut *to_ptr).running = true;
+        *(&mut *from_ptr).running = false;
+        *(&mut *to_ptr).running = true;
         if let Some(ref stack) = (*to_ptr).kstack {
             gdt::set_tss_stack(stack.as_ptr() as usize + stack.len());
         }
@@ -147,10 +147,10 @@ pub unsafe fn switch() -> bool {
             //TODO: Allow nested signals
             assert!((&mut *to_ptr).ksig.is_none());
 
-            let arch = (&mut *to_ptr).arch.clone();
+            let arch = (*(&mut *to_ptr).arch).clone();
             let kfx = (&mut *to_ptr).kfx.clone();
             let kstack = (&mut *to_ptr).kstack.clone();
-            (&mut *to_ptr).ksig = Some((arch, kfx, kstack));
+            *(&mut *to_ptr).ksig = Some((arch, kfx, kstack));
             (&mut *to_ptr).arch.signal_stack(signal_handler, sig);
         }
 

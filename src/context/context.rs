@@ -116,7 +116,7 @@ pub struct Context {
     /// Status of context
     pub status: Status,
     /// Context running or not
-    pub running: bool,
+    pub running: Box<bool>,
     /// CPU ID, if locked
     pub cpu_id: Option<usize>,
     /// Current system call
@@ -134,13 +134,13 @@ pub struct Context {
     /// Context should wake up at specified time
     pub wake: Option<(u64, u64)>,
     /// The architecture specific context
-    pub arch: arch::Context,
+    pub arch: Box<arch::Context>,
     /// Kernel FX - used to store SIMD and FPU registers on context switch
     pub kfx: Option<Box<[u8]>>,
     /// Kernel stack
     pub kstack: Option<Box<[u8]>>,
     /// Kernel signal backup
-    pub ksig: Option<(arch::Context, Option<Box<[u8]>>, Option<Box<[u8]>>)>,
+    pub ksig: Box<Option<(arch::Context, Option<Box<[u8]>>, Option<Box<[u8]>>)>>,
     /// Restore ksig context on next switch
     pub ksig_restore: bool,
     /// Executable image
@@ -182,7 +182,7 @@ impl Context {
             ens: SchemeNamespace::from(0),
             umask: 0o022,
             status: Status::Blocked,
-            running: false,
+            running: Box::new(false),
             cpu_id: None,
             syscall: None,
             syscall_head: syscall_head,
@@ -191,10 +191,10 @@ impl Context {
             waitpid: Arc::new(WaitMap::new()),
             pending: VecDeque::new(),
             wake: None,
-            arch: arch::Context::new(),
+            arch: Box::new(arch::Context::new()),
             kfx: None,
             kstack: None,
-            ksig: None,
+            ksig: Box::new(None),
             ksig_restore: false,
             image: Vec::new(),
             heap: None,
