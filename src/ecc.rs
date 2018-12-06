@@ -8,7 +8,7 @@ use spin::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use context::Context;
 
 const ECC_LEN: usize = 8;
-const MAX_BLOCK_SIZE: usize = 50 - ECC_LEN; //255 - ECC_LEN;
+const MAX_BLOCK_SIZE: usize = 255 - ECC_LEN;
 
 /* see https://github.com/rust-lang/rust/issues/56512
 pub struct Ecc<T> where T: Sized {
