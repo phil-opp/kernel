@@ -35,5 +35,17 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     map_heap(active_table, offset, size);
 
     // Initialize global heap
-    Allocator::init(offset, size);
+    Allocator::init(offset + core::mem::size_of::<u64>(), size);
+
+
+    // read and print marker
+    const MARKER: u64 = 0x0000ACCE55ED0000;
+    let marker_ptr = offset as *mut u64;
+    let marker_value = marker_ptr.read();
+    if marker_value == MARKER {
+        println!("\n\n\nTHIS IS A HOT REBOOT\n\n\n");
+    } else {
+        println!("\n\n\nTHIS IS A NORMAL BOOT\n(marker value {:#x} != {:#x}\n\n", marker_value, MARKER);
+        marker_ptr.write(MARKER);
+    }
 }
