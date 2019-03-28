@@ -1,96 +1,11 @@
-use core::{
-    mem,
-    ops::{Deref, DerefMut},
-};
+use core::mem;
 use reed_solomon::{Encoder, Decoder, DecoderError};
-use spin::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use spin::RwLock;
 
 use context::Context;
 
 const ECC_LEN: usize = 8;
 const MAX_BLOCK_SIZE: usize = 255 - ECC_LEN;
-
-/* see https://github.com/rust-lang/rust/issues/56512
-pub struct Ecc<T> where T: Sized {
-    data: [Buffer; (mem::size_of::<T>() + MAX_BLOCK_SIZE - 1) / MAX_BLOCK_SIZE],
-    phantom: PhantomData<T>,
-}
-*/
-
-#[derive(Debug)]
-pub struct EccContextRwLock(RwLock<EccContext>);
-
-impl EccContextRwLock {
-    pub fn new(context: Context) -> Self {
-        Self(RwLock::new(EccContext::new(context)))
-    }
-
-    pub fn read(&self) -> EccContextRwLockReadGuard {
-        return self.read_repair();
-        let ecc_context = self.0.read();
-        //assert!(!ecc_context.is_corrupted(), "Context is corrupted");
-        if ecc_context.is_corrupted() {
-            println!("Context is corrupted on read");
-            println!("stored ECC:     {:x?}", ecc_context.ecc);
-            EccContext::calculate_ecc(&ecc_context.context);
-        }
-        EccContextRwLockReadGuard(ecc_context)
-    }
-
-    pub fn read_repair(&self) -> EccContextRwLockReadGuard {
-        {
-            let ecc_context = self.0.read();
-            if ecc_context.is_corrupted() {
-                println!("Context is corrupted on read");
-                println!("stored ECC:     {:x?}", ecc_context.ecc);
-                println!("calculated ECC: {:x?}", EccContext::calculate_ecc(&ecc_context.context));
-            }
-        }
-        {
-            self.0.write().repair();
-        }
-        EccContextRwLockReadGuard(self.0.read())
-    }
-
-    pub fn write(&self) -> EccContextRwLockWriteGuard {
-        let mut ecc_context = self.0.write();
-        ecc_context.repair();
-        EccContextRwLockWriteGuard(ecc_context)
-    }
-}
-
-pub struct EccContextRwLockReadGuard<'a>(RwLockReadGuard<'a, EccContext>);
-
-impl<'a> Deref for EccContextRwLockReadGuard<'a> {
-    type Target = Context;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0.context
-    }
-}
-
-pub struct EccContextRwLockWriteGuard<'a>(RwLockWriteGuard<'a, EccContext>);
-
-impl<'a> Deref for EccContextRwLockWriteGuard<'a> {
-    type Target = Context;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0.context
-    }
-}
-
-impl<'a> DerefMut for EccContextRwLockWriteGuard<'a> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0.context
-    }
-}
-
-impl<'a> Drop for EccContextRwLockWriteGuard<'a> {
-    fn drop(&mut self) {
-        self.0.ecc = EccContext::calculate_ecc(&self.0.context);
-        assert!(!self.0.is_corrupted());
-    }
-}
 
 #[derive(Debug)]
 pub struct EccContext {
@@ -104,6 +19,14 @@ impl EccContext {
         let ret = Self {context, ecc};
         assert!(!ret.is_corrupted());
         ret
+    }
+
+    pub fn context(&self) -> &Context {
+        &self.context
+    }
+
+    pub fn context_mut(&mut self) -> &mut Context {
+        &mut self.context
     }
 
     fn calculate_ecc(context: &Context) -> [[u8; ECC_LEN]; (mem::size_of::<Context>() + MAX_BLOCK_SIZE - 1) / MAX_BLOCK_SIZE] {
@@ -121,7 +44,11 @@ impl EccContext {
         ecc
     }
 
-    fn repair(&mut self) {
+    pub fn recalculate_ecc(&mut self) {
+        self.ecc = Self::calculate_ecc(&self.context);
+    }
+
+    pub fn repair(&mut self) {
         let Self {context, ecc} = self;
 
         let data_ptr = context as *mut Context as *mut [u8; mem::size_of::<Context>()];
@@ -145,7 +72,7 @@ impl EccContext {
         }
     }
 
-    fn is_corrupted(&self) -> bool {
+    pub fn is_corrupted(&self) -> bool {
         let Self {context, ecc} = self;
 
         let data_ptr = context as *const Context as *const [u8; mem::size_of::<Context>()];

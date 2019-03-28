@@ -60,7 +60,11 @@ impl ContextList {
 
         assert!(self.map.insert(id, Arc::new(ContextRwLock::new(Context::new(id)))).is_none());
 
-        Ok(self.map.get(&id).expect("Failed to insert new context. ID is out of bounds."))
+        let ret = self.map.get(&id).expect("Failed to insert new context. ID is out of bounds.");
+
+        println!("context reference: {:?}", &ret.read().id as *const _);
+
+        Ok(ret)
     }
 
     /// Spawn a context from a function.
