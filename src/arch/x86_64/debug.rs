@@ -18,58 +18,43 @@ use super::device::serial::COM1;
 #[cfg(feature = "qemu_debug")]
 pub static QEMU: Mutex<Pio<u8>> = Mutex::new(Pio::<u8>::new(0x402));
 
-pub struct Writer<'a> {
-    log: MutexGuard<'a, Option<Log>>,
-    #[cfg(feature = "graphical_debug")]
-    display: MutexGuard<'a, Option<DebugDisplay>>,
-    #[cfg(feature = "qemu_debug")]
-    qemu: MutexGuard<'a, Pio<u8>>,
-    #[cfg(feature = "serial_debug")]
-    serial: MutexGuard<'a, SerialPort<Pio<u8>>>,
-}
+pub struct Writer;
 
-impl<'a> Writer<'a> {
-    pub fn new() -> Writer<'a> {
-        Writer {
-            log: LOG.lock(),
-            #[cfg(feature = "graphical_debug")]
-            display: DEBUG_DISPLAY.lock(),
-            #[cfg(feature = "qemu_debug")]
-            qemu: QEMU.lock(),
-            #[cfg(feature = "serial_debug")]
-            serial: COM1.lock(),
-        }
+impl Writer {
+    pub fn new() -> Self {
+        Writer
     }
 
     pub fn write(&mut self, buf: &[u8]) {
         {
-            if let Some(ref mut log) = *self.log {
+            if let Some(ref mut log) = *LOG.lock() {
                 log.write(buf);
             }
         }
 
         #[cfg(feature = "graphical_debug")]
         {
-            if let Some(ref mut display) = *self.display {
+            if let Some(ref mut display) = *DEBUG_DISPLAY.lock() {
                 let _ = display.write(buf);
             }
         }
 
         #[cfg(feature = "qemu_debug")]
         {
+            let qemu = QEMU.lock();
             for &b in buf {
-                self.qemu.write(b);
+                qemu.write(b);
             }
         }
 
         #[cfg(feature = "serial_debug")]
         {
-            self.serial.write(buf);
+            COM1.lock().write(buf);
         }
     }
 }
 
-impl<'a> fmt::Write for Writer<'a> {
+impl fmt::Write for Writer {
     fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
         self.write(s.as_bytes());
         Ok(())
