@@ -21,6 +21,12 @@
     /// Size of kernel heap
     pub const KERNEL_HEAP_SIZE: usize = 1 * 1024 * 1024; // 1 MB
 
+    /// Offset to restorable kernel heap
+    pub const KERNEL_RESTORABLE_HEAP_OFFSET: usize = KERNEL_HEAP_OFFSET - PML4_SIZE;
+    pub const KERNEL_RESTORABLE_HEAP_PML4: usize = (KERNEL_RESTORABLE_HEAP_OFFSET & PML4_MASK)/PML4_SIZE;
+    /// Size of restorable kernel heap
+    pub const KERNEL_RESTORABLE_HEAP_SIZE: usize = 1 * 1024 * 1024; // 1 MB
+
     /// Offset to kernel percpu variables
     //TODO: Use 64-bit fs offset to enable this pub const KERNEL_PERCPU_OFFSET: usize = KERNEL_HEAP_OFFSET - PML4_SIZE;
     pub const KERNEL_PERCPU_OFFSET: usize = 0xC000_0000;

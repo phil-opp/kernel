@@ -7,6 +7,7 @@ use core::slice;
 use core::sync::atomic::{AtomicBool, ATOMIC_BOOL_INIT, AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
 
 use allocator;
+use heap_restore;
 #[cfg(feature = "acpi")]
 use acpi;
 #[cfg(feature = "graphical_debug")]
@@ -111,6 +112,8 @@ pub unsafe extern fn kstart(args_ptr: *const KernelArgs) -> ! {
 
         // Setup kernel heap
         allocator::init(&mut active_table);
+        // Setup restorable kernel heap
+        heap_restore::init(&mut active_table);
 
         // Activate memory logging
         log::init();

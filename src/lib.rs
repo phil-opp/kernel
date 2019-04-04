@@ -24,6 +24,8 @@
 #![feature(never_type)]
 #![feature(ptr_internals)]
 #![feature(thread_local)]
+#![feature(optin_builtin_traits)]
+#![feature(arbitrary_self_types)]
 #![no_std]
 
 pub extern crate x86;
@@ -106,6 +108,7 @@ pub mod syscall;
 pub mod time;
 
 mod ecc;
+mod heap_restore;
 
 /// Tests
 #[cfg(test)]
