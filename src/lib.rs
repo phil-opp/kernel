@@ -26,6 +26,7 @@
 #![feature(thread_local)]
 #![feature(optin_builtin_traits)]
 #![feature(arbitrary_self_types)]
+#![feature(trivial_bounds)]
 #![no_std]
 
 pub extern crate x86;
@@ -42,6 +43,7 @@ extern crate spin;
 #[cfg(feature = "slab")]
 extern crate slab_allocator;
 extern crate reed_solomon;
+extern crate restore_attribute;
 
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};

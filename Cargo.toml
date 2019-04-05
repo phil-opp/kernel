@@ -17,6 +17,7 @@ redox_syscall = { path = "syscall" }
 slab_allocator = { path = "slab_allocator", optional = true }
 spin = "0.4.8"
 reed-solomon = "0.2.1"
+restore_attribute = {path = "../../restore_attribute"}
 
 [dependencies.goblin]
 version = "0.0.15"

@@ -1,3 +1,5 @@
+pub use self::restorable_statics::Restorable;
+
 use paging::ActivePageTable;
 use self::allocator::RestorableAllocator;
 use self::restorable_statics::{RestorableStatics, ConsistencyCheckable};
@@ -7,7 +9,7 @@ use core::{mem, alloc::{Layout, GlobalAlloc}, cell::UnsafeCell};
 mod allocator;
 mod restorable_statics;
 
-static RESTORABLE_STATICS: Mutex<Option<&'static mut RestorableStatics>> = Mutex::new(None);
+pub static RESTORABLE_STATICS: Mutex<Option<&'static mut RestorableStatics>> = Mutex::new(None);
 
 pub unsafe fn init(active_table: &mut ActivePageTable) {
     let offset = ::KERNEL_RESTORABLE_HEAP_OFFSET;
@@ -43,7 +45,11 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     *RESTORABLE_STATICS.lock() = Some(&mut *statics_ptr);
 
     println!("RESTORE_ME: {}", RESTORE_ME.get());
+    println!("FOO: {}", FOO.get());
+    println!("FOO2: {}", FOO2.get());
     RESTORE_ME.set(103);
+    FOO.set(FOO.get() + 1);
+    FOO2.set(FOO2.get() + 1);
     println!("\n\n\n");
 }
 
@@ -109,3 +115,10 @@ impl RestoreTestValue {
         unsafe { mem::transmute_copy(value) }
     }
 }
+
+use restore_attribute::restore;
+
+#[restore]
+static mut FOO: RestoreTestValue = RestoreTestValue::new(40);
+#[restore]
+static mut FOO2: RestoreTestValue = RestoreTestValue::new(41);
